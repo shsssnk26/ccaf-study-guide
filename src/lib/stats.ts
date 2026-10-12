@@ -1,0 +1,52 @@
+import { DOMAINS } from "../data/domains";
+import { BY_TASK, ORDER, QUESTIONS, TASKS, type TaskInfo } from "./catalog";
+import type { Domain, Progress, RunEntry } from "./types";
+
+export type TaskStatus = "new" | "weak" | "shaky" | "going" | "solid";
+export const STATUS_LABEL: Record<TaskStatus, string> = { new: "Not started", weak: "Weak", shaky: "Needs work", going: "Correct so far", solid: "Solid" };
+
+export interface TaskStat { total: number; answered: number; right: number; status: TaskStatus }
+
+export function taskStat(p: Progress, taskId: string): TaskStat {
+  const qs = BY_TASK[taskId];
+  let answered = 0, right = 0;
+  for (const q of qs) { const r = p.a[q.id]; if (r) { answered++; if (r.ok) right++; } }
+  let status: TaskStatus = "new";
+  if (answered > 0) {
+    const ratio = right / answered;
+    status = ratio < 0.5 ? "weak" : ratio < 1 ? "shaky" : answered < qs.length ? "going" : "solid";
+  }
+  return { total: qs.length, answered, right, status };
+}
+
+export function domainStat(p: Progress, d: Domain) {
+  const s = { total: 0, answered: 0, right: 0 };
+  for (const t of d.tasks) { const ts = taskStat(p, t.id); s.total += ts.total; s.answered += ts.answered; s.right += ts.right; }
+  return s;
+}
+
+/** Overall numbers; accuracy is weighted by each domain's share of the exam, counting only domains with answers. */
+export function overall(p: Progress) {
+  let answered = 0, right = 0, wsum = 0, wacc = 0, needWork = 0;
+  for (const d of DOMAINS) {
+    const s = domainStat(p, d);
+    answered += s.answered; right += s.right;
+    if (s.answered > 0) { wsum += d.weight; wacc += d.weight * (s.right / s.answered); }
+    for (const t of d.tasks) { const st = taskStat(p, t.id).status; if (st === "weak" || st === "shaky") needWork++; }
+  }
+  return { total: QUESTIONS.length, answered, right, needWork, weighted: wsum > 0 ? Math.round((100 * wacc) / wsum) : null };
+}
+
+/** Weak statements first, then shaky ones; within each, heavier exam domains first. */
+export function weakTasks(p: Progress): { task: TaskInfo; stat: TaskStat }[] {
+  const out = ORDER.map((id) => ({ task: TASKS[id], stat: taskStat(p, id) })).filter((w) => w.stat.status === "weak" || w.stat.status === "shaky");
+  return out.sort((a, b) => a.stat.status === b.stat.status ? b.task.domain.weight - a.task.domain.weight : a.stat.status === "weak" ? -1 : 1);
+}
+
+/* Advice bands: below 50% fundamentals, 50 to 74% targeted lessons, 75% and above timed practice tests. */
+export type Band = "low" | "mid" | "high";
+export function band(pct: number): Band { return pct < 50 ? "low" : pct < 75 ? "mid" : "high"; }
+export const BAND_LABEL: Record<Band, string> = { low: "Build the basics", mid: "Study the lessons", high: "Ready for practice tests" };
+
+/** A test entry is correct when the picked position holds original option 0. */
+export function entryCorrect(e: RunEntry | undefined) { return !!e && e[1] >= 0 && e[0].charAt(e[1]) === "0"; }

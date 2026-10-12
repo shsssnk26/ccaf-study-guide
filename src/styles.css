@@ -1,3 +1,4 @@
+body { margin: 0; } [hidden] { display: none !important; }
 /* Layout: one reading column. Home offers two doors (diagnose, learn); everything else is ruled sections whose rows are task statements. */
 :root {
   --bg: #F4F6FB; --surface: #FFFFFF; --ink: #111A38; --muted: #56607F; --line: #D9DEEC;
@@ -24,7 +25,7 @@
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
 .wrap { max-width: 900px; margin-inline: auto; padding-inline: 20px; padding-block: 20px 56px; display: flex; flex-direction: column; gap: 28px; }
-#app { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+#main { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; line-height: 1.15; }
 p, dl, dd, ul { margin: 0; }
 a { color: var(--accent); }
@@ -318,3 +319,13 @@ button.opt:hover:not([disabled]) .letter, .opt.sel .letter { background: linear-
 .auth-msg.bad { background: var(--bad-bg); color: var(--bad); }
 .auth-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
 .auth-links:empty { display: none; }
+
+/* React app additions */
+a.door, a.btn { color: inherit; text-decoration: none; }
+a.door { color: var(--ink); }
+a.btn.primary { color: var(--accent-ink); }
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: 16px; top: 12px; z-index: 10; background: var(--surface); padding: 8px 12px; border-radius: 8px; }
+.notfound { display: flex; flex-direction: column; gap: 14px; }
+a.brand { color: var(--ink); text-decoration: none; }
+a.tab { text-decoration: none; }
