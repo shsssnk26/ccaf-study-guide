@@ -23,15 +23,32 @@
       <button class="tab" data-act="nav" data-v="tests" id="tab-tests">Practice tests</button>
       <button class="tab" data-act="nav" data-v="progress" id="tab-progress">Progress</button>
     </nav>
+    <div class="acct" id="acct"></div>
   </header>
   <main id="app"></main>
   <footer class="foot">
     <p>Unofficial study aid, not affiliated with or endorsed by Anthropic. Every question and lesson here was written for study; nothing comes from the exam. Task statement numbers follow the official Claude Certified Architect – Foundations exam guide (version 1.0). Read the guide itself for the full wording, and check code against the current documentation, since tools change.</p>
-    <p>Your progress is saved only in this browser.</p>
+    <p id="sync-note">Your progress is saved only in this browser.</p>
     <div id="reset-zone"></div>
   </footer>
 </div>
 
+<dialog class="auth" id="auth" aria-labelledby="auth-title">
+  <form id="auth-form" novalidate>
+    <h2 id="auth-title">Sign in</h2>
+    <p class="note" id="auth-lede">Sign in to save your progress to your account and pick it up on any device.</p>
+    <label class="field" id="auth-email-field"><span>Email</span><input type="email" id="auth-email" autocomplete="email" required></label>
+    <label class="field" id="auth-pass-field"><span>Password</span><input type="password" id="auth-pass" autocomplete="current-password" minlength="6" required></label>
+    <p class="auth-msg" id="auth-msg" role="status" hidden></p>
+    <div class="actions">
+      <button class="btn primary" type="submit" id="auth-submit">Sign in</button>
+      <button class="btn" type="button" data-act="auth-close" id="auth-cancel">Cancel</button>
+    </div>
+    <div class="auth-links" id="auth-links"></div>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
 <script>
 (function () {
   "use strict";
@@ -619,8 +636,159 @@ spread across document types, and have a person check them.`,
     try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (p && p.a) { p.t = p.t || {}; return p; } } } catch (e) {}
     return { a: {}, t: {} };
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} schedulePush(); }
   var store = load();
+
+  /* Accounts: Supabase handles sign-in; progress is one JSON row per user in public.progress (row-level security keeps rows private).
+     localStorage stays the working copy, so the site works signed out or offline; signed-in saves are pushed after a short pause. */
+  var SB_URL = "https://qtyvtobzzknnibbkjwjd.supabase.co";
+  var SB_KEY = "sb_publishable_zW-YJnLYiQT1dv9ADlPfaA_Lj51oniz";
+  var sb = window.supabase && window.supabase.createClient ? window.supabase.createClient(SB_URL, SB_KEY) : null;
+  var user = null, accessToken = null, pushTimer = null, pushChain = Promise.resolve(), syncState = "";
+  var hashErr = /(?:^#|&)error_description=([^&]+)/.exec(location.hash);
+
+  function schedulePush() {
+    if (!user) return;
+    clearTimeout(pushTimer); pushTimer = setTimeout(function () { push(false); }, 1500); setSync("saving");
+  }
+  function push(keepalive) {
+    clearTimeout(pushTimer); pushTimer = null;
+    if (!user || !accessToken) return pushChain;
+    var send = function () {
+      return fetch(SB_URL + "/rest/v1/progress?on_conflict=user_id", { method: "POST", keepalive: keepalive,
+        headers: { apikey: SB_KEY, Authorization: "Bearer " + accessToken, "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify({ user_id: user.id, data: store, updated_at: new Date().toISOString() }) })
+        .then(function (r) { setSync(r.ok ? "saved" : "error"); }, function () { setSync("error"); });
+    };
+    /* Normal pushes run one at a time so an older body never lands after a newer one; a push on page exit goes straight out. */
+    if (keepalive) return send();
+    pushChain = pushChain.then(send);
+    return pushChain;
+  }
+  /* Per question and per test, keep whichever copy has more attempts; the best score is the higher of the two. */
+  function merge(local, remote) {
+    var out = { a: {}, t: {} };
+    [local, remote].forEach(function (src) {
+      Object.keys(src.a || {}).forEach(function (id) { var x = src.a[id], y = out.a[id]; if (!y || x.n > y.n) out.a[id] = x; });
+      Object.keys(src.t || {}).forEach(function (id) {
+        var x = src.t[id], y = out.t[id];
+        if (!y) { out.t[id] = x; return; }
+        var w = x.n > y.n || (x.n === y.n && x.last && y.last && x.last.when > y.last.when) ? x : y;
+        out.t[id] = Object.assign({}, w, { best: Math.max(x.best || 0, y.best || 0) });
+      });
+    });
+    if (local.run || remote.run) out.run = local.run || remote.run;
+    return out;
+  }
+  function pull() {
+    if (!user) return;
+    setSync("saving");
+    sb.from("progress").select("data").eq("user_id", user.id).maybeSingle().then(function (res) {
+      if (res.error) { setSync("error"); return; }
+      var remote = res.data && res.data.data;
+      if (remote && remote.a) { store = merge(store, remote); try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+      push(false); render(false);
+    }, function () { setSync("error"); });
+  }
+  function setSync(st) {
+    syncState = st;
+    var el = document.getElementById("sync-note");
+    if (!sb) return;
+    if (!user) { el.textContent = "Your progress is saved only in this browser. Sign in to keep it in your account."; return; }
+    el.textContent = "Signed in as " + user.email + ". Progress is saved to your account" +
+      (st === "saving" ? " (saving…)" : st === "saved" ? " (saved)." : st === "error" ? ", but the last save failed. It will retry with your next answer." : ".");
+  }
+  function renderAcct() {
+    var el = document.getElementById("acct");
+    if (!sb) { el.innerHTML = ""; return; }
+    el.innerHTML = user
+      ? '<span class="acct-email" title="' + esc(user.email) + '">' + esc(user.email) + '</span><button class="linkbtn" data-act="auth-signout" id="auth-signout">Sign out</button>'
+      : '<button class="btn small" data-act="auth-open" id="auth-open">Sign in</button>';
+    setSync(syncState);
+  }
+  function signOut() {
+    push(false).then(function () { return sb.auth.signOut(); }).then(function () {
+      store = { a: {}, t: {} }; try { localStorage.removeItem(KEY); } catch (e) {}
+      user = null; accessToken = null; syncState = ""; confirmReset = false; renderAcct(); go("home");
+    });
+  }
+
+  var authMode = "signin", authBusy = false;
+  var AUTH = {
+    signin: ["Sign in", "Sign in to save your progress to your account and pick it up on any device.", "Sign in"],
+    signup: ["Create an account", "Any progress already in this browser is copied to your account when you sign in.", "Create account"],
+    forgot: ["Reset your password", "Enter your email and we will send you a link to set a new password.", "Send reset link"],
+    reset: ["Set a new password", "Choose a new password for your account.", "Save password"]
+  };
+  function authMsg(text, kind) {
+    var m = document.getElementById("auth-msg");
+    m.hidden = !text; m.textContent = text || ""; m.className = "auth-msg" + (kind ? " " + kind : "");
+  }
+  function setAuthMode(mode, msg, kind) {
+    authMode = mode;
+    var M = AUTH[mode], pass = document.getElementById("auth-pass");
+    document.getElementById("auth-title").textContent = M[0];
+    document.getElementById("auth-lede").textContent = M[1];
+    document.getElementById("auth-submit").textContent = M[2];
+    document.getElementById("auth-email-field").hidden = mode === "reset";
+    document.getElementById("auth-pass-field").hidden = mode === "forgot";
+    pass.setAttribute("autocomplete", mode === "signin" ? "current-password" : "new-password");
+    document.getElementById("auth-links").innerHTML =
+      mode === "signin" ? '<button type="button" class="linkbtn" data-act="auth-mode" data-v="signup" id="auth-to-signup">Create an account</button><button type="button" class="linkbtn" data-act="auth-mode" data-v="forgot" id="auth-to-forgot">Forgot password?</button>'
+      : mode === "reset" ? "" : '<button type="button" class="linkbtn" data-act="auth-mode" data-v="signin" id="auth-to-signin">Back to sign in</button>';
+    authMsg(msg, kind);
+  }
+  function openAuth(mode, msg, kind) {
+    setAuthMode(mode, msg, kind);
+    var d = document.getElementById("auth");
+    if (!d.open) d.showModal();
+    document.getElementById(mode === "reset" ? "auth-pass" : "auth-email").focus();
+  }
+  function closeAuth() { var d = document.getElementById("auth"); if (d.open) d.close(); }
+  function authBusySet(on) { authBusy = on; document.getElementById("auth-submit").disabled = on; }
+  function friendly(err) {
+    var m = err && err.message || "";
+    if (/invalid login credentials/i.test(m)) return "That email and password don't match an account.";
+    if (/email not confirmed/i.test(m)) return "Confirm your email first. Check your inbox for the link we sent.";
+    if (/rate limit/i.test(m)) return "Too many emails were sent recently. Wait a few minutes and try again.";
+    return m || "Something went wrong. Try again.";
+  }
+  document.getElementById("auth").addEventListener("close", function () { document.getElementById("auth-pass").value = ""; authMsg(""); });
+  document.getElementById("auth-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (authBusy || !sb) return;
+    var email = document.getElementById("auth-email").value.trim(), pass = document.getElementById("auth-pass").value, mode = authMode;
+    if (mode !== "reset" && !/^\S+@\S+\.\S+$/.test(email)) { authMsg("Enter a valid email address.", "bad"); return; }
+    if (mode !== "forgot" && pass.length < 6) { authMsg("Passwords need at least 6 characters.", "bad"); return; }
+    var back = location.origin + location.pathname;
+    var req = mode === "signin" ? sb.auth.signInWithPassword({ email: email, password: pass })
+      : mode === "signup" ? sb.auth.signUp({ email: email, password: pass, options: { emailRedirectTo: back } })
+      : mode === "forgot" ? sb.auth.resetPasswordForEmail(email, { redirectTo: back })
+      : sb.auth.updateUser({ password: pass });
+    authBusySet(true); authMsg("");
+    req.then(function (res) {
+      authBusySet(false);
+      if (res.error) { authMsg(friendly(res.error), "bad"); return; }
+      if (mode === "signup" && !res.data.session) { document.getElementById("auth-pass").value = ""; setAuthMode("signin", "Check your email for a confirmation link. After confirming, sign in here.", "good"); return; }
+      if (mode === "forgot") { authMsg("If that email has an account, a reset link is on its way.", "good"); return; }
+      closeAuth();
+    }, function () { authBusySet(false); authMsg("Couldn't reach the server. Check your connection and try again.", "bad"); });
+  });
+
+  if (sb) {
+    sb.auth.onAuthStateChange(function (event, session) {
+      accessToken = session ? session.access_token : null;
+      var next = session ? session.user : null, isNew = next && (!user || user.id !== next.id);
+      user = next;
+      renderAcct();
+      /* Supabase asks callers not to await its own calls inside this callback, so the fetch runs on the next tick. */
+      if (isNew) setTimeout(pull, 0);
+      if (event === "PASSWORD_RECOVERY") openAuth("reset");
+    });
+    window.addEventListener("pagehide", function () { if (pushTimer) push(true); });
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden" && pushTimer) push(true); });
+    window.addEventListener("online", function () { if (user && syncState === "error") push(false); });
+  }
   var view = "home", lessonId = null, session = null, confirmReset = false;
   var pickSel = { 1: true, 2: true, 3: true, 4: true, 5: true }, skipRight = false;
 
@@ -960,7 +1128,7 @@ spread across document types, and have a person check them.`,
     var cur = view === "lesson" ? "lessons" : view === "quiz" || view === "done" ? "gaps" : view === "test" || view === "tresult" ? "tests" : view;
     ["home", "gaps", "lessons", "tests", "progress"].forEach(function (v) { var el = document.getElementById("tab-" + v); if (v === cur) el.setAttribute("aria-current", "page"); else el.removeAttribute("aria-current"); });
     document.getElementById("reset-zone").innerHTML = confirmReset
-      ? '<div class="confirm"><span>Delete all saved answers and test results in this browser?</span><button class="btn small" data-act="reset-yes" id="reset-yes">Yes, reset</button><button class="btn small" data-act="reset-no" id="reset-no">Keep them</button></div>'
+      ? '<div class="confirm"><span>Delete all saved answers and test results ' + (user ? 'from your account and this browser' : 'in this browser') + '?</span><button class="btn small" data-act="reset-yes" id="reset-yes">Yes, reset</button><button class="btn small" data-act="reset-no" id="reset-no">Keep them</button></div>'
       : '<button class="linkbtn" data-act="reset-ask" id="reset-ask">Reset my progress</button>';
     if (focus) { window.scrollTo(0, 0); var s = document.getElementById("stem"); if (s) s.focus({ preventScroll: true }); }
   }
@@ -1006,6 +1174,10 @@ spread across document types, and have a person check them.`,
       save(); render(top);
       if (!top) { var back = document.getElementById(act === "test-submit" ? "test-submit-yes" : keep); if (back) back.focus({ preventScroll: true }); }
     }
+    else if (act === "auth-open") openAuth("signin");
+    else if (act === "auth-close") closeAuth();
+    else if (act === "auth-mode") setAuthMode(el.getAttribute("data-v"));
+    else if (act === "auth-signout") signOut();
     else if (act === "reset-ask") { confirmReset = true; render(false); }
     else if (act === "reset-no") { confirmReset = false; render(false); }
     else if (act === "reset-yes") { store = { a: {}, t: {} }; save(); confirmReset = false; go("home"); }
@@ -1028,6 +1200,11 @@ spread across document types, and have a person check them.`,
   }
   window.addEventListener("hashchange", function () { fromHash(false); });
   fromHash(true);
+  renderAcct();
+  if (hashErr && sb) {
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    openAuth("signin", decodeURIComponent(hashErr[1].replace(/\+/g, " ")) + ". Request a new link and try again.", "bad");
+  }
 })();
 </script>
 </body>

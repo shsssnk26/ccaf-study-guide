@@ -302,3 +302,19 @@ button.opt:hover:not([disabled]) .letter, .opt.sel .letter { background: linear-
   @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 60% { transform: translateX(4px); } }
   @keyframes pulse { 50% { opacity: 0.55; } }
 }
+
+/* Account: header sign-in control and the sign-in dialog. */
+.acct { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.acct-email { color: var(--muted); font-size: 14px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auth { width: min(420px, calc(100vw - 32px)); border: 1px solid var(--line); border-radius: 14px; padding: 24px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-lift); }
+.auth::backdrop { background: rgba(10, 16, 38, 0.45); }
+.auth form { display: flex; flex-direction: column; gap: 14px; }
+.auth h2 { font-size: 22px; }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 14px; }
+.field input { font: inherit; font-size: 16px; font-weight: 400; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.auth-msg { font-size: 14px; padding: 10px 12px; border-radius: 8px; background: var(--track); }
+.auth-msg.good { background: var(--good-bg); color: var(--good); }
+.auth-msg.bad { background: var(--bad-bg); color: var(--bad); }
+.auth-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+.auth-links:empty { display: none; }
