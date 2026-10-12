@@ -4,19 +4,19 @@ Zero to Agent: an unofficial study companion for the Claude Certified Architect 
 
 Not affiliated with or endorsed by Anthropic.
 
-Live: https://shsssnk26.github.io/ccaf-study-guide/
+Live: https://ccaf.zerotoagent.net
 
 ## Stack
 
 - React + TypeScript, built with Vite, routed with React Router
 - Supabase for email/password accounts and saved progress (one `progress` row per user, protected by row-level security)
-- GitHub Pages, deployed by `.github/workflows/deploy.yml` on every push to `main`
+- GitHub Pages with the custom domain `ccaf.zerotoagent.net` (Cloudflare CNAME to `shsssnk26.github.io`), deployed by `.github/workflows/deploy.yml` on every push to `main`
 
 ## Develop
 
 ```sh
 npm install
-npm run dev        # http://localhost:5173/ccaf-study-guide/
+npm run dev        # http://localhost:5173/
 npm test           # unit tests (scoring, merge, catalog)
 npm run build      # production build in dist/
 ```
