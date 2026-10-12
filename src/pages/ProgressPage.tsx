@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Advice, Pill, Stats } from "../components/ui";
 import { DOMAINS } from "../data/domains";
 import { TESTS, idsForTasks, taskSlug } from "../lib/catalog";
-import { STATUS_LABEL, domainStat, overall, weakTasks } from "../lib/stats";
+import { STATUS_LABEL, closeTasks, domainStat, overall, weakTasks } from "../lib/stats";
 import { plural } from "../lib/util";
 import { usePractice } from "../state/practice";
 import { useProgress } from "../state/progress";
@@ -32,8 +32,8 @@ function TestsSummary() {
 export function ProgressPage() {
   const { progress } = useProgress();
   const { start } = usePractice();
-  const o = overall(progress), list = weakTasks(progress);
-  const lead = <section className="lead"><h1>Your progress</h1><p>Built from your latest answer to each question.</p></section>;
+  const o = overall(progress), list = weakTasks(progress), close = closeTasks(progress);
+  const lead = <section className="lead"><h1>Your progress</h1><p>Built from your latest answer to each question, including your latest practice test attempts.</p></section>;
 
   if (!o.answered) {
     return (
@@ -83,7 +83,7 @@ export function ProgressPage() {
               {list.map((w) => (
                 <li className="row" key={w.task.id}>
                   <span className="id">{w.task.id}</span>
-                  <div><h3>{w.task.title}</h3><p className="note">{w.task.domain.name} · {w.stat.right} of {w.stat.answered} correct on your latest try</p></div>
+                  <div><h3>{w.task.title}</h3><p className="note">{w.task.domain.name} · {w.stat.correct} of {w.stat.seen} correct on your latest tries</p></div>
                   <div className="side">
                     <Pill kind={w.stat.status}>{STATUS_LABEL[w.stat.status]}</Pill>
                     <Link className="btn small" to={`/lessons/${taskSlug(w.task.id)}`}>Lesson</Link>
@@ -95,6 +95,28 @@ export function ProgressPage() {
           </>
         )}
       </section>
+      {close.length > 0 && (
+        <section>
+          <h2 className="h2">Nearly there</h2>
+          <p className="muted">These statements are 75 to 94% right. Skip the lessons: keep drilling the questions and take a practice test to lock them in.</p>
+          <div className="actions" style={{ margin: "8px 0" }}>
+            <button className="btn primary" onClick={() => start(idsForTasks(close.map((w) => w.task.id)), "Nearly there")}>Drill all {close.length}</button>
+            <Link className="btn" to="/tests">Take a practice test</Link>
+          </div>
+          <ul className="rows">
+            {close.map((w) => (
+              <li className="row" key={w.task.id}>
+                <span className="id">{w.task.id}</span>
+                <div><h3>{w.task.title}</h3><p className="note">{w.task.domain.name} · {w.stat.correct} of {w.stat.seen} correct on your latest tries</p></div>
+                <div className="side">
+                  <Pill kind={w.stat.status}>{STATUS_LABEL[w.stat.status]}</Pill>
+                  <button className="btn small" onClick={() => start(idsForTasks([w.task.id]), `Task ${w.task.id}: ${w.task.title}`)}>Drill</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <TestsSummary />
     </>
   );

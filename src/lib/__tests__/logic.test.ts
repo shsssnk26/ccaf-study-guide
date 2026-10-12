@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BY_TASK, ORDER, QUESTIONS, TESTS } from "../catalog";
 import { mergeProgress } from "../progress";
-import { band, entryCorrect, overall, taskStat, weakTasks } from "../stats";
+import { band, closeTasks, entryCorrect, overall, taskStat, weakTasks } from "../stats";
 import type { Progress } from "../types";
 
 const empty = (): Progress => ({ a: {}, t: {} });
@@ -28,6 +28,22 @@ describe("task status", () => {
   it("is solid only when every question is answered correctly", () => {
     const a = Object.fromEntries(BY_TASK["1.1"].map((q) => [q.id, { n: 1, ok: true }]));
     expect(taskStat({ a, t: {} }, "1.1").status).toBe("solid");
+  });
+  it("is nearly there between 75 and 95%, counting the latest practice test answers", () => {
+    const a = Object.fromEntries(BY_TASK["1.1"].map((q) => [q.id, { n: 1, ok: true }]));
+    const tq = TESTS[0].questions.filter((q) => q.task === "1.1");
+    const q = Object.fromEntries(tq.map((x, k) => [x.id, ["0123", k === 0 ? 1 : 0, 0] as [string, number, number]]));
+    const p: Progress = { a, t: { [TESTS[0].id]: { n: 1, best: 0, last: { right: 0, total: 60, pct: 0, when: 1, used: 0, q } } } };
+    const s = taskStat(p, "1.1");
+    expect(s.seen).toBe(3 + tq.length);
+    expect(s.correct).toBe(2 + tq.length);
+    expect(s.status).toBe("close");
+    expect(closeTasks(p).map((w) => w.task.id)).toEqual(["1.1"]);
+    expect(overall(p).needWork).toBe(0);
+  });
+  it("is shaky from 50 up to 75%", () => {
+    const [x, y, z] = BY_TASK["1.1"];
+    expect(taskStat({ a: { [x.id]: { n: 1, ok: true }, [y.id]: { n: 1, ok: true }, [z.id]: { n: 1, ok: false } }, t: {} }, "1.1").status).toBe("shaky");
   });
   it("lists weak statements before shaky ones", () => {
     const p: Progress = { a: { [BY_TASK["5.1"][0].id]: { n: 1, ok: false } }, t: {} };
