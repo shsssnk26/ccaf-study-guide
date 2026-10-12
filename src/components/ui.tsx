@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { SCENARIOS } from "../data/scenarios";
+import { SCENARIOS } from "../data";
 import { ACADEMY_URL } from "../lib/catalog";
 import { band } from "../lib/stats";
 import type { ScenarioKey } from "../lib/types";

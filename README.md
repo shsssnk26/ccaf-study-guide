@@ -27,13 +27,15 @@ Supabase settings live in `.env`. The publishable key is meant to be public; row
 
 | Path | What |
 |---|---|
-| `src/data/` | Content: domains, lessons, scenarios, question bank, practice tests |
+| `src/data/domains/` | One folder per domain, each with one folder per task statement (`1.1-agentic-loops/`) holding `lesson.ts` and `questions.ts` |
+| `src/data/tests/` | The two practice tests |
+| `src/data/index.ts` | Gathers all content for the app |
 | `src/lib/` | Catalog, scoring rules, progress storage and merge, Supabase client |
 | `src/state/` | Auth, progress sync and practice-session providers |
 | `src/pages/` | One component per screen |
 | `src/components/` | Layout, sign-in dialog, shared UI |
 
-To edit a question or lesson, change the matching file in `src/data/`. Question ids are derived from each question's position within its task statement (for example `1.3-2`). Saved progress is keyed by these ids, so add new questions at the end of a task statement's list instead of inserting them in the middle.
+To edit a lesson or question, open the task statement's folder, for example `src/data/domains/1-agentic-architecture-orchestration/1.3-subagent-invocation-and-context-passing/`, and change `lesson.ts` or `questions.ts`. Question ids come from each question's position in `questions.ts` (for example `1.3-2`). Saved progress is keyed by these ids, so add new questions at the end of the list and never reorder or delete them.
 
 ## Database
 

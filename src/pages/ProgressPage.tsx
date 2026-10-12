@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { Advice, Pill, Stats } from "../components/ui";
-import { DOMAINS } from "../data/domains";
+import { DOMAINS } from "../data";
 import { TESTS, idsForTasks, taskSlug } from "../lib/catalog";
 import { STATUS_LABEL, closeTasks, domainStat, overall, weakTasks } from "../lib/stats";
 import { plural } from "../lib/util";

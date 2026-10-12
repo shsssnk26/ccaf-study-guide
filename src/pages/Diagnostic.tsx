@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pill } from "../components/ui";
-import { DOMAINS } from "../data/domains";
+import { DOMAINS } from "../data";
 import { idsForTasks } from "../lib/catalog";
 import { domainStat } from "../lib/stats";
 import { plural } from "../lib/util";

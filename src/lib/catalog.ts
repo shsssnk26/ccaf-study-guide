@@ -1,6 +1,4 @@
-import { DOMAINS } from "../data/domains";
-import { QUESTION_BANK } from "../data/questions";
-import { PRACTICE_TESTS } from "../data/tests";
+import { DOMAINS, PRACTICE_TESTS, QUESTION_BANK } from "../data";
 import type { Domain, PracticeTestSource, Question, Task } from "./types";
 
 export const ACADEMY_URL = "https://anthropic.skilljar.com/";

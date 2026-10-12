@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { SCENARIOS } from "../data/scenarios";
+import { SCENARIOS } from "../data";
 import { BY_ID } from "../lib/catalog";
 import { shuffle } from "../lib/util";
 

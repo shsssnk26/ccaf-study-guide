@@ -1,7 +1,6 @@
 import { Link, Navigate, useParams } from "react-router";
 import { AcademyLink, LETTERS, OptionBody, Pill } from "../components/ui";
-import { DOMAINS } from "../data/domains";
-import { SCENARIOS } from "../data/scenarios";
+import { DOMAINS, SCENARIOS } from "../data";
 import { ORDER, TASKS, TEST_BY_ID, TEST_MINUTES, taskSlug } from "../lib/catalog";
 import { BAND_LABEL, band, entryCorrect } from "../lib/stats";
 import { clock } from "../lib/util";

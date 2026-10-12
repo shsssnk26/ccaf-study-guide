@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, useParams } from "react-router";
 import { Pill } from "../components/ui";
-import { LESSONS } from "../data/lessons";
+import { LESSONS } from "../data";
 import { ORDER, TASKS, idsForTasks, taskFromSlug, taskSlug } from "../lib/catalog";
 import { STATUS_LABEL, taskStat } from "../lib/stats";
 import { usePractice } from "../state/practice";

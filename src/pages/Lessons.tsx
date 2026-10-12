@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { Pill } from "../components/ui";
-import { DOMAINS } from "../data/domains";
+import { DOMAINS } from "../data";
 import { taskSlug } from "../lib/catalog";
 import { STATUS_LABEL, taskStat } from "../lib/stats";
 import { useProgress } from "../state/progress";

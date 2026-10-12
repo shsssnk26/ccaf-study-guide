@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { SCENARIOS } from "../data/scenarios";
+import { SCENARIOS } from "../data";
 import { TESTS, TEST_BY_ID } from "../lib/catalog";
 import { useNow } from "../lib/useNow";
 import { clock, plural } from "../lib/util";

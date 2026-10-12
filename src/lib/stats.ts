@@ -1,4 +1,4 @@
-import { DOMAINS } from "../data/domains";
+import { DOMAINS } from "../data";
 import { BY_TASK, ORDER, QUESTIONS, TASKS, TESTS, type TaskInfo } from "./catalog";
 import type { Domain, Progress, RunEntry } from "./types";
 

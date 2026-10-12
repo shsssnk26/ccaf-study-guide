@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, Navigate } from "react-router";
 import { Advice, LETTERS, OptionBody, Pill, ScenarioAside } from "../components/ui";
-import { DOMAINS } from "../data/domains";
+import { DOMAINS } from "../data";
 import { BY_ID, TASKS, taskSlug } from "../lib/catalog";
 import { BAND_LABEL, band } from "../lib/stats";
 import type { Domain } from "../lib/types";

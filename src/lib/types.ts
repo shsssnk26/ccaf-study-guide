@@ -12,6 +12,11 @@ export interface Lesson {
 /** A question as written. options[0] is always the correct answer; options are shuffled on screen. */
 export interface QuestionSource { task: string; scenario: ScenarioKey; stem: string; options: [string, string, string, string]; explanation: string }
 export interface Question extends QuestionSource { id: string }
+/** A drill question inside a task folder; the task id comes from the folder. */
+export type TaskQuestion = Omit<QuestionSource, "task">;
+/** One task statement folder: its summary, lesson and drill questions. */
+export interface TaskContent extends Task { lesson: Lesson; questions: TaskQuestion[] }
+export interface DomainContent extends Omit<Domain, "tasks"> { tasks: TaskContent[] }
 export interface PracticeTestSource { id: string; name: string; scenarios: ScenarioKey[]; questions: QuestionSource[] }
 
 /* Saved progress. The shape matches what earlier versions stored, so existing browser and account data keeps working. */
