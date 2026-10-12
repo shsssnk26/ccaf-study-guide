@@ -13,6 +13,7 @@ const NAV = [
   { to: "/lessons", label: "Lessons" },
   { to: "/tests", label: "Practice tests" },
   { to: "/progress", label: "Progress" },
+  { to: "/resources", label: "Resources" },
 ];
 
 function Logo() {

@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from "react-router";
-import { AcademyLink, LETTERS, OptionBody, Pill } from "../components/ui";
+import { AcademyLink, LETTERS, MorePracticeLink, OptionBody, Pill } from "../components/ui";
 import { DOMAINS, SCENARIOS } from "../data";
 import { ORDER, TASKS, TEST_BY_ID, TEST_MINUTES, taskSlug } from "../lib/catalog";
 import { BAND_LABEL, band, entryCorrect } from "../lib/stats";
@@ -41,6 +41,12 @@ export function TestReview() {
           <><h2>Work through the lessons first</h2><p>At {L.pct}% the gaps are spread across several domains. Go through the lessons for the weakest domains below before another timed test.</p></>
         ) : (
           <><h2>Go back to the fundamentals</h2><p>At {L.pct}% it is too early for timed tests. Take the Anthropic Academy courses, then the lessons here, and come back to the tests afterwards.</p><div className="actions"><AcademyLink /></div></>
+        )}
+        {L.pct >= 75 && L.pct < 95 && (
+          <>
+            <p>You are close. For more exam-style questions once you have taken both tests here, try an independent question bank.</p>
+            <div className="actions"><MorePracticeLink /><Link className="btn" to="/resources">All resources</Link></div>
+          </>
         )}
         <p className="note">The real exam uses a scaled score (720 of 1,000 to pass). A percentage here is a guide, not a prediction.</p>
       </section>

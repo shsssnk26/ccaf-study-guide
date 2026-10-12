@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Advice, Pill, Stats } from "../components/ui";
+import { Advice, MorePracticeLink, Pill, Stats } from "../components/ui";
 import { DOMAINS } from "../data";
 import { TESTS, idsForTasks, taskSlug } from "../lib/catalog";
 import { STATUS_LABEL, closeTasks, domainStat, overall, weakTasks } from "../lib/stats";
@@ -102,6 +102,7 @@ export function ProgressPage() {
           <div className="actions" style={{ margin: "8px 0" }}>
             <button className="btn primary" onClick={() => start(idsForTasks(close.map((w) => w.task.id)), "Nearly there")}>Drill all {close.length}</button>
             <Link className="btn" to="/tests">Take a practice test</Link>
+            <MorePracticeLink />
           </div>
           <ul className="rows">
             {close.map((w) => (

@@ -9,6 +9,7 @@ import { test as test1 } from "./tests/test-1";
 import { test as test2 } from "./tests/test-2";
 
 export { SCENARIOS } from "./scenarios";
+export { CERTSAFARI, COMMUNITY_RESOURCES, OFFICIAL_RESOURCES, type Resource } from "./resources";
 
 export const DOMAIN_CONTENT: DomainContent[] = [d1, d2, d3, d4, d5];
 

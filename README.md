@@ -29,6 +29,7 @@ Supabase settings live in `.env`. The publishable key is meant to be public; row
 |---|---|
 | `src/data/domains/` | One folder per domain, each with one folder per task statement (`1.1-agentic-loops/`) holding `lesson.ts` and `questions.ts` |
 | `src/data/tests/` | The two practice tests |
+| `src/data/resources.ts` | Official and community links shown on the Resources page |
 | `src/data/index.ts` | Gathers all content for the app |
 | `src/lib/` | Catalog, scoring rules, progress storage and merge, Supabase client |
 | `src/state/` | Auth, progress sync and practice-session providers |

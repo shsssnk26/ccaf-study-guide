@@ -7,6 +7,7 @@ import { Lessons } from "./pages/Lessons";
 import { NotFound } from "./pages/NotFound";
 import { Practice } from "./pages/Practice";
 import { ProgressPage } from "./pages/ProgressPage";
+import { Resources } from "./pages/Resources";
 import { TestReview } from "./pages/TestReview";
 import { Tests } from "./pages/Tests";
 import { TestTake } from "./pages/TestTake";
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
         { path: "tests/take", element: <TestTake /> },
         { path: "tests/:testId/review", element: <TestReview /> },
         { path: "progress", element: <ProgressPage /> },
+        { path: "resources", element: <Resources /> },
         { path: "*", element: <NotFound /> },
       ],
     }],
